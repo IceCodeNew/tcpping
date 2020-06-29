@@ -74,7 +74,7 @@ export LANG=C
 set -o pipefail
 
 usage () {
-	name=`basename $0`
+	name=$(basename "$0")
 	echo "tcpping $ver Richard van den Berg <richard@vdberg.org>, Orsiris de Jong <ozy@netpower.fr>"
 	echo
 	echo "Usage: $name [-d] [-c] [-C] [-w sec] [-q num] [-x count] ipaddress [port]"
@@ -113,11 +113,11 @@ getLocalOS() {
 		if grep -i Microsoft /proc/sys/kernel/osrelease > /dev/null 2>&1; then
 			localOsVar="Microsoft"
 		else
-			localOsVar="`uname -spior 2>&1`"
+			localOsVar="$(uname -spior 2>&1)"
 			if [ $? != 0 ]; then
-				localOsVar="`uname -v 2>&1`"
+				localOsVar="$(uname -v 2>&1)"
 				if [ $? != 0 ]; then
-					localOsVar="`uname`"
+					localOsVar="$(uname)"
 				fi
 			fi
 		fi
@@ -181,7 +181,7 @@ _testSite() {
 		if [ $i -gt 3 ]; then
 			args="$args $givenArgs"
 		fi
-		i=`expr $i + 1`
+		i=$(expr $i + 1)
 	done
 
 	local traceRoute=
@@ -190,8 +190,8 @@ _testSite() {
 	local rtt=
 
 	shift
-	[ "${c}" = "yes" ] && nows=`date +${format}`
-	[ "${d}" = "yes" ] && nowd=`date`
+	[ "${c}" = "yes" ] && nows=$(date +${format})
+	[ "${d}" = "yes" ] && nowd=$(date)
 
 	# Remove first line from result
 	traceRouteCommand="$SUDO_COMMAND traceroute ${METHOD_PARAMETER} ${METHOD} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
@@ -201,15 +201,15 @@ _testSite() {
 
 	# BSD traceroute outputs header line to stderr while outputting results to stdout, whereas linux versions output everything to stdout
 	if [ "$LOCAL_OS" = "BSD" ] || [ "$LOCAL_OS" = "MacOSX" ]; then
-		traceRoute=`$traceRouteCommand 2>/dev/null`
+		traceRoute=$($traceRouteCommand 2>/dev/null)
 	else
-		traceRoute=`$traceRouteCommand 2>/dev/null | awk 'NR>1'`
+		traceRoute=$($traceRouteCommand 2>/dev/null | awk 'NR>1')
 	fi
 	result=$?
 
-	if [ $myseq -eq 0 ]; then
+	if [ "$myseq" -eq 0 ]; then
 		if [ $result -ne 0 ]; then
-			if [ "`id -u`" -ne 0 ]; then
+			if [ "$(id -u)" -ne 0 ]; then
 				echo >&2 "Unable to run '$traceRouteCommand' command. Please try run $0 with -Z parameter or 'sudo $0'"
 				exit 20
 			else
@@ -224,8 +224,8 @@ _testSite() {
 		fi
 	fi
 
-	rtt=`echo "${traceRoute}" | awk '{print $4}'`
-	not=`echo "${rtt}" | tr -d ".0123456789"`
+	rtt=$(echo "${traceRoute}" | awk '{print $4}')
+	not=$(echo "${rtt}" | tr -d ".0123456789")
 
 	[ "${d}" = "yes" ] && echo "$nowd"
 	if [ "${c}" = "yes" ]; then
@@ -239,7 +239,7 @@ _testSite() {
 			echo -n "$host :"
 		fi
 		if [ "x${rtt}" != "x" -a "x${not}" = "x" ]; then
-			if [ $rtt != "255" ]; then
+			if [ "$rtt" != "255" ]; then
 				echo -n " $rtt"
 			else
 				echo -n " -"
@@ -260,7 +260,7 @@ _testSite() {
 
 _quit() {
         echo ""
-        echo "${pingCount} packets transmitted, `expr ${pingCount} - ${pingFailCount}` received."
+        echo "${pingCount} packets transmitted, $(expr "${pingCount}" - "${pingFailCount}") received."
         exit
 }
 
@@ -268,8 +268,8 @@ checkEnvironment
 
 while getopts Zdhzq:w:cr:nNFSAEi:f:l:m:p:s:x:CM:o opt ; do
 	case "$opt" in
-		d|c|C) eval $opt="yes" ;;
-		q|x) eval $opt="$OPTARG" ;;
+		d|c|C) eval "$opt"="yes" ;;
+		q|x) eval "$opt"="$OPTARG" ;;
 		r) interval="$OPTARG" ;;
 		n|N|F|S|A|E) topt="$topt -$opt" ;;
 		i|s) topt="$topt -$opt $OPTARG" ;;
@@ -285,7 +285,7 @@ while getopts Zdhzq:w:cr:nNFSAEi:f:l:m:p:s:x:CM:o opt ; do
 done
 
 
-shift `expr $OPTIND - 1`
+shift $(expr $OPTIND - 1)
 
 if [ "x$1" = "x" ]; then
 	usage
@@ -297,9 +297,9 @@ if [ "${summary}" = "yes" ]; then
 fi
 
 # Use awk to multiply possible float in timeToWait
-maxRtt=`awk 'BEGIN{printf "%.2f\n", ('${timeToWait}'*1000)}'`
+maxRtt=$(awk 'BEGIN{printf "%.2f\n", ('"${timeToWait}"'*1000)}')
 
-if [ `date +%s` != "%s" ]; then
+if [ $(date +%s) != "%s" ]; then
 	format="%s"
 fi
 
@@ -315,10 +315,10 @@ i=1
 for args in "${@}"; do
 	if [ $i -eq $# ]; then
 		lastArg=$args
-	elif [ $i -eq `expr $# - 1` ]; then
+	elif [ $i -eq $(expr $# - 1) ]; then
 		beforeLastArg=$args
 	fi
-	i=`expr $i + 1`
+	i=$(expr $i + 1)
 done
 
 case $lastArg in
@@ -338,7 +338,7 @@ esac
 # Use an arbitrary factor of 0.7 to cope with shell execution time
 
 if [ "$interval" == "auto" ]; then
-	interval=`awk 'BEGIN { print ('$timeToWait'*.7)}'`
+	interval=$(awk 'BEGIN { print ('"$timeToWait"'*.7)}')
 fi
 
 pingCount=0
@@ -346,15 +346,15 @@ pingFailCount=0
 
 while [ $pingCount -lt $x ] || [ $x -eq 0 ]; do
 	result=""
-	_testSite "${host}" "${port}" ${seq} ${topt} &
+	_testSite "${host}" "${port}" ${seq} "${topt}" &
 	pid=$!
 
 	if [ "${C}" = "yes" ]; then
 		wait $pid
 		result=$?
 	fi
-	seq=`expr $seq + 1`
-	if [ $seq -gt 0 ]; then
+	seq=$(expr $seq + 1)
+	if [ "$seq" -gt 0 ]; then
 		_DEBUG=false
 	fi
 	if [ "$result" = "" ]; then
@@ -362,14 +362,14 @@ while [ $pingCount -lt $x ] || [ $x -eq 0 ]; do
 		result=$?
 	fi
 
-	pingCount=`expr $pingCount + 1`
+	pingCount=$(expr $pingCount + 1)
 	if [ $result -ne 0 ]; then
-		pingFailCount=`expr $pingFailCount + 1`
+		pingFailCount=$(expr $pingFailCount + 1)
 		if [ $result -eq 20 ] || [ $result -eq 21 ] || [ $result -eq 22 ]; then
 			exit $result
 		fi
-	elif [ $pingCount -lt $x ] || [ $x -eq 0 ]; then
-		sleep ${interval}
+	elif [ "$pingCount" -lt $x ] || [ $x -eq 0 ]; then
+		sleep "${interval}"
 	fi
 done
 if [ "$summary" = "yes" ]; then
